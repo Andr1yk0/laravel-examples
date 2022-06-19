@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  php-fpm:
+    container_name: laravel-examples-php
+    build:
+      args:
+        user: user
+        uid: 1000
+      context: ./
+      dockerfile: docker/php-fpm/Dockerfile
+    volumes:
+      - ./src:/var/www
+  node:
+    container_name: laravel-examples-node
+    user: node
+    build:
+      context: ./
+      dockerfile: docker/node-app/Dockerfile
+    volumes:
+      - ./src:/home/node/app
+    working_dir: /home/node/app
+    ports:
+      - "3000:3000"
+    tty: true
+  nginx:
+    container_name: laravel-examples-nginx
+    build: ./docker/nginx
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "8080:80"
+    links:
+      - php-fpm
+  mysql:
+    image: mysql:8.0.24
+    container_name: laravel-examples-mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - mysql_data:/var/lib/mysql/
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+    ports:
+      - "33061:3306"
+volumes:
+  mysql_data:
+    driver: local
